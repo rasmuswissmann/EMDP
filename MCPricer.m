@@ -53,14 +53,14 @@ classdef MCPricer < Pricer
             stream = RandStream('mt19937ar','seed',sum(100*clock));
             RandStream.setGlobalStream(stream);
             
-            sigm = zeros(N,numTimeSteps);
-            gamma = zeros(N,N,numTimeSteps);
-            d = N;
-            for j=1:numTimeSteps
-                sigm(:,j) = assetModel.getVolatility(S,(j-1)*dt);
-                rho = assetModel.getCorrelation(S,(j-1)*dt);
-                gamma(:,:,j) = MCPricer.gamma_d(rho,d); % TODO in model?
-            end
+            %sigm = zeros(N,numTimeSteps);
+            %gamma = zeros(N,N,numTimeSteps);
+            %d = N;
+            %for j=1:numTimeSteps
+            %    sigm(:,j) = assetModel.getVolatility(S,(j-1)*dt);
+            %    rho = assetModel.getCorrelation(S,(j-1)*dt);
+            %    gamma(:,:,j) = MCPricer.gamma_d(rho,d); % TODO in model?
+            %end
             
             L_initial = repmat(L_initial,M_par,1);
             
@@ -167,9 +167,8 @@ classdef MCPricer < Pricer
                     L(:,:,j+1) = L(:,:,j) + drift + sigma'.*dW;
                 end
                 
-                % Assure positivty (TODO: this might not be right approach
-                % for all schemes)
-                L(:,:,j+1) = max(L(:,:,j+1),0);
+                % Assure positivty? 
+                % L(:,:,j+1) = max(L(:,:,j+1),0);
                 
             end
             %end

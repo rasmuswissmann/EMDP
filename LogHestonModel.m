@@ -1,6 +1,10 @@
 classdef LogHestonModel < AssetModel
     % both S and vol in log coordinates
     
+    %%% Using this model successfully will require previously modifying the
+    %%% current MCPricer to guarantee positivity of volatilites and the
+    %%% PDEExpansionPrice to deal with boundary conditions.
+    
     properties
         r = [0,0,0]';
         q = [0,0,0]';

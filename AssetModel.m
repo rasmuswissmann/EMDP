@@ -69,7 +69,7 @@ classdef AssetModel
         function mu = getDrift(obj,S,t)
             if obj.isPreloaded
                 if obj.isConstDrift % const 
-                    mu = obj.sigmapre;
+                    mu = obj.mupre;
                 elseif (obj.isVarSpaceModel()==false) % time-dependent only
                     [~, i] = min(abs(obj.t_range - t));
                     mu = obj.mupre(:,:,i);
@@ -147,7 +147,7 @@ classdef AssetModel
             ranges = obj.ranges;
         end
         
-        function obj = precompute(obj,S_range,t_range)
+        function obj = preload(obj,S_range,t_range)
             if obj.isConstDriftModel()
                 obj.mupre = obj.getDrift(S_range,0);
             else
