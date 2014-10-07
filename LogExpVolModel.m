@@ -12,9 +12,9 @@ classdef LogExpVolModel < AssetModel
         function obj = LogExpVolModel(N)
             obj = obj@AssetModel(2*N); % N stocks, N volatilities
             
-            obj.xi = ones(N,1);
-            obj.ybar = -1.5*ones(N,1);
-            obj.theta = 0.2*ones(N,1);
+	          obj.xi = 0.6*ones(N,1);
+	          obj.ybar = -1.5*ones(N,1);
+	          obj.theta = 0.5*ones(N,1);
             rho1 = AssetModel.buildSimpleConstantCorrelationMatrix(N,0.85);
             rho2 = eye(N);
             obj.rho = [rho1,zeros(N,N);zeros(N,N),rho2];

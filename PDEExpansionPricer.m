@@ -4,7 +4,6 @@ classdef PDEExpansionPricer < Pricer
     
     properties
         J = 400;
-        J3 = 400;
         dt = 0.1;
         scheme = 'ADI'; % ADI or HV
         ADIMethod3D = 'Brian'; % Douglas or Brian ADI for 3D problems
@@ -14,11 +13,10 @@ classdef PDEExpansionPricer < Pricer
     end
     
     methods
-        function obj = PDEExpansionPricer(J,dt,order,scheme,J3,ADIMethod3D,MAX_PAYOUT)
+        function obj = PDEExpansionPricer(J,dt,order,scheme,ADIMethod3D,MAX_PAYOUT)
             obj = obj@Pricer();
             if nargin >= 1
                 obj.J = J;
-                obj.J3 = J;
             end
             if nargin >= 2
                 obj.dt = dt;
@@ -30,12 +28,9 @@ classdef PDEExpansionPricer < Pricer
                 obj.scheme = scheme;
             end
             if nargin >= 5
-                obj.J3 = J3;
-            end
-            if nargin >= 6
                 obj.ADIMethod3D = ADIMethod3D;
             end
-            if nargin >= 7
+            if nargin >= 6
                 obj.MAX_PAYOUT = MAX_PAYOUT;
             end
         end
@@ -48,7 +43,7 @@ classdef PDEExpansionPricer < Pricer
             dt = obj.dt;
             J1 = obj.J;
             J2 = obj.J;
-            J3 = obj.J3;
+            J3 = obj.J;
             N = assetModel.getNumberOfAssets();
             T = derivative.getTerminalTime();
             L = S(1:N);
@@ -143,11 +138,8 @@ classdef PDEExpansionPricer < Pricer
                 disp(u_com);
             end
             
-            J3
-            
             if (obj.order >= 2)
                 % 3-DIM CASE for 1, k, m
-                % This does so far not support spatially varying lambda
                 [A1,Ak,Am] = PDEExpansionPricer.matrices3Dim(J3);
                 L_grid3D_1 = PDEExpansionPricer.L_grid3Dim1(N,J3,Q,y2);
                 lambda = zeros(N,N);
@@ -159,23 +151,14 @@ classdef PDEExpansionPricer < Pricer
                     for m=k+1:N
                         toc
                         disp(strcat('3-dim computation for k=',num2str(k),', m=',num2str(m)));
+                        lambda = PDEExpansionPricer.updateLambda(lambda,assetModel,L,T,ct/M*T,Q,[1,k,m]);
                         
                         L_grid3D_m = PDEExpansionPricer.L_grid3Dimm(N,J3,Q,y2,m);
                         L_grid = PDEExpansionPricer.L_grid3Dim(N,beta,Q,v0,k,m,L_grid3D_1k+L_grid3D_m,1);
                         u3 = PDEExpansionPricer.initialCondition(L_grid,derivative,obj.MAX_PAYOUT);
                         
-                        LRange = L';
-                        if (assetModel.isConstCovarrianceModel())
-                            lambda = PDEExpansionPricer.updateLambda(lambda,assetModel,LRange,T,0/M*T,Q,[1,k,m]);
-                            % all M time steps
-                            u3 = PDEExpansionPricer.ADI3D(u3,(J3+1)^3,lambda,gamma,dt,M,A1,Ak,Am,1,k,m,obj.ADIMethod3D);
-                        else
-                            for ct=1:M
-                                lambda = PDEExpansionPricer.updateLambda(lambda,assetModel,LRange,T,ct/M*T,Q,[1,k,m]);
-                                % just one time step
-                                u3 = PDEExpansionPricer.ADI3D(u3,(J3+1)^3,lambda,gamma,dt,1,A1,Ak,Am,1,k,m,obj.ADIMethod3D);
-                            end
-                        end
+                        %TODO: ADI3D in here with varying lambda
+                        u3 = PDEExpansionPricer.ADI3D(u3,(J3+1)^3,lambda,gamma,dt,M,A1,Ak,Am,1,k,m,obj.ADIMethod3D);
                         
                         u3d(k,m) = PDEExpansionPricer.u_interpL3D(u3,k,m,v0,J3,y2)
                         u_com = u_com + u3d(k,m) - u2d(k) - u2d(m) + u1d
@@ -507,7 +490,7 @@ classdef PDEExpansionPricer < Pricer
             % adjust ranges
             trafoParams = arctanTrafo(N,M,beta,z,lplus,lminus,Q,J1,J2);
         end
-        
+       
         function [gamma,y1,y2] = arctanTrafo(N,M,beta,z,lplus,lminus,Q,J1,J2)
             tau_c = M+1;
             QlnLp = sum(max(Q,0),2).*lplus - sum(max(-Q,0),2).*lminus;

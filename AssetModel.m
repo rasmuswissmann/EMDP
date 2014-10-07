@@ -18,6 +18,7 @@ classdef AssetModel
         S_range;
         t_range;
         isPreloaded = false;
+        MAXVOL = 10000; % Cap max volatility to avoid Inf/NaN in covariance matrix
     end
     
     methods
@@ -47,6 +48,7 @@ classdef AssetModel
             else
                 sigma = obj.calculateVolatility(S,t);
             end
+            sigma = min(sigma,obj.MAXVOL);
         end
         
         function rho = getCorrelation(obj,S,t)
@@ -69,7 +71,7 @@ classdef AssetModel
         function mu = getDrift(obj,S,t)
             if obj.isPreloaded
                 if obj.isConstDrift % const 
-                    mu = obj.mupre;
+                    mu = obj.sigmapre;
                 elseif (obj.isVarSpaceModel()==false) % time-dependent only
                     [~, i] = min(abs(obj.t_range - t));
                     mu = obj.mupre(:,:,i);
@@ -147,7 +149,7 @@ classdef AssetModel
             ranges = obj.ranges;
         end
         
-        function obj = preload(obj,S_range,t_range)
+        function obj = precompute(obj,S_range,t_range)
             if obj.isConstDriftModel()
                 obj.mupre = obj.getDrift(S_range,0);
             else
